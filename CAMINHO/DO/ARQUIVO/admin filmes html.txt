@@ -1,0 +1,251 @@
+admin filmes html
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Filme Editor</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin: 5px 0;
+            cursor: pointer;
+            padding: 8px;
+            background-color: #ddd;
+        }
+
+        #modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            z-index: 1;
+        }
+
+        #modal input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        #modal button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #modal button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>GitHub Filme Editor</h1>
+
+    <ul id="listaFilmes"></ul>
+
+    <div id="modal">
+        <label for="editNome">Nome:</label>
+        <input type="text" id="editNome">
+
+        <label for="editCategoria">Categoria:</label>
+        <input type="text" id="editCategoria">
+
+        <label for="editId">ID:</label>
+        <input type="text" id="editId" readonly>
+
+        <label for="editIdade">Idade:</label>
+        <input type="text" id="editIdade">
+
+        <label for="editCapa">Capa:</label>
+        <input type="text" id="editCapa">
+
+        <label for="editPlayer">Player:</label>
+        <input type="text" id="editPlayer">
+
+        <button onclick="salvarEdicao()">Salvar Edição</button>
+    </div>
+
+    <script>
+        async function carregarListaFilmes() {
+            const apiUrl = 'https://api.github.com/repos/mxfliofc/apis-mx-ofc-pv/contents/filmes.json';
+            const accessToken = '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';
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `token ${accessToken}`,
+                    },
+                });
+
+                const data = await response.json();
+
+                let listaFilmes;
+                try {
+                    const decodedContent = atob(data.content);
+                    listaFilmes = JSON.parse(decodedContent);
+                } catch (error) {
+                    console.error('Erro ao carregar lista de filmes:', error);
+                    return;
+                }
+
+                const listaFilmesElement = document.getElementById('listaFilmes');
+                listaFilmesElement.innerHTML = '';
+
+                listaFilmes.forEach(filme => {
+                    const li = document.createElement('li');
+                    li.textContent = filme.nome;
+                    li.dataset.filme = JSON.stringify(filme);
+                    li.onclick = () => exibirModal(filme);
+                    listaFilmesElement.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar lista de filmes:', error);
+            }
+        }
+
+        function exibirModal(filme) {
+            const modal = document.getElementById('modal');
+            const editNome = document.getElementById('editNome');
+            const editCategoria = document.getElementById('editCategoria');
+            const editId = document.getElementById('editId');
+            const editIdade = document.getElementById('editIdade');
+            const editCapa = document.getElementById('editCapa');
+            const editPlayer = document.getElementById('editPlayer');
+
+            editNome.value = filme.nome;
+            editCategoria.value = filme.categoria;
+            editId.value = filme.id;
+            editIdade.value = filme.idade;
+            editCapa.value = filme.capa;
+            editPlayer.value = filme.player;
+
+            // Exibir o modal
+            modal.style.display = 'block';
+        }
+
+        async function salvarEdicao() {
+            const apiUrl = 'https://api.github.com/repos/mxfliofc/apis-mx-ofc-pv/contents/filmes.json';
+            const accessToken = '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';
+
+            const editNome = document.getElementById('editNome').value;
+            const editCategoria = document.getElementById('editCategoria').value;
+            const editId = document.getElementById('editId').value;
+            const editIdade = document.getElementById('editIdade').value;
+            const editCapa = document.getElementById('editCapa').value;
+            const editPlayer = document.getElementById('editPlayer').value;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `token ${accessToken}`,
+                    },
+                });
+
+                const data = await response.json();
+                const decodedContent = atob(data.content);
+
+                let listaFilmes;
+                try {
+                    listaFilmes = JSON.parse(decodedContent);
+                } catch (error) {
+                    console.error('Erro ao carregar lista de filmes:', error);
+                    return;
+                }
+
+                const filmeIndex = listaFilmes.findIndex(filme => filme.id === editId);
+
+                if (filmeIndex !== -1) {
+                    // Atualiza os dados do filme
+                    listaFilmes[filmeIndex] = {
+                        nome: editNome,
+                        categoria: editCategoria,
+                        id: editId,
+                        idade: editIdade,
+                        capa: editCapa,
+                        player: editPlayer,
+                    };
+
+                    // Atualiza o conteúdo no GitHub
+                    const updatedContent = JSON.stringify(listaFilmes, null, 2);
+                    const updateResponse = await fetch(apiUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            message: 'Atualizando dados',
+                            content: btoa(unescape(encodeURIComponent(updatedContent))),
+                            sha: data.sha,
+                        }),
+                    });
+
+                    const updateData = await updateResponse.json();
+                    console.log('Dados atualizados no GitHub:', updateData);
+                    alert('Dados atualizados no GitHub!');
+                } else {
+                    console.error('Filme não encontrado para atualização.');
+                }
+            } catch (error) {
+                console.error('Erro ao salvar edição no GitHub:', error);
+                alert('Erro ao salvar edição no GitHub. Verifique o console para mais detalhes.');
+            }
+
+            // Ocultar o modal
+            const modal = document.getElementById('modal');
+            modal.style.display = 'none';
+
+            // Recarregar a lista de filmes
+            carregarListaFilmes();
+        }
+
+        // Carregar a lista de filmes ao carregar a página
+        window.onload = carregarListaFilmes;
+    </script>
+</body>
+
+</html>
